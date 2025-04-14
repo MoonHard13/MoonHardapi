@@ -55,6 +55,9 @@ async def get_status():
 async def websocket_endpoint(websocket: WebSocket, client_id: str, token: str = Query(...)):
     check_token(token)
     await websocket.accept()
+    if client_id not in connected_clients:
+        connected_clients[client_id] = {}
+        logger.info(f"ℹ️ Auto-registered {client_id} on WebSocket connect.")
     connected_clients[client_id]["websocket"] = websocket
     connected_clients[client_id]["last_seen"] = datetime.utcnow()
 
