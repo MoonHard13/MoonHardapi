@@ -48,8 +48,7 @@ class ClientDashboard(ctk.CTk):
     def broadcast_status(self):
         try:
             response = requests.post(
-                f"{SERVER_URL}/broadcast?token={AUTH_TOKEN}",
-                json={"command": "get_status"}
+                f"{SERVER_URL}/broadcast?token={AUTH_TOKEN}&command=get_status"
             )
             self.status_box.insert("end", f"📡 Broadcast: {response.json()}\n")
         except Exception as e:
