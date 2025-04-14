@@ -19,25 +19,13 @@ async def listen_websocket():
             msg = await websocket.recv()
 
             if msg == "get_status":
-                import time
-
-                disk_usage = psutil.disk_usage('/')
-                boot_time = psutil.boot_time()
-                uptime = time.time() - boot_time
-
                 status = {
                     "client_id": CLIENT_ID,
-                    "hostname": socket.gethostname(),
-                    "ip_address": socket.gethostbyname(socket.gethostname()),
-                    "platform": platform.platform(),
-                    "cpu_percent": psutil.cpu_percent(interval=1),
-                    "ram_percent": psutil.virtual_memory().percent,
-                    "disk_percent": disk_usage.percent,
-                    "uptime_minutes": round(uptime / 60, 2)
+                    "platform": platform.system(),
+                    "cpu": psutil.cpu_percent(),
+                    "ram": psutil.virtual_memory().percent
                 }
-
                 await websocket.send(json.dumps(status))
-
 
 def register_client():
     url = f"{SERVER_URL}/register/{CLIENT_ID}?token={AUTH_TOKEN}"
