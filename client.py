@@ -72,9 +72,10 @@ class TrayClient:
         try:
             response = requests.get(CLIENT_SOURCE_URL)
             if response.status_code == 200:
-                with open(CLIENT_LOCAL_PATH, 'w', encoding='utf-8') as f:
+                temp_path = CLIENT_LOCAL_PATH + ".new"
+                with open(temp_path, 'w', encoding='utf-8') as f:
                     f.write(response.text)
-                print("✅ Client script updated from GitHub.")
+                print("✅ Downloaded new client.py (will apply on next restart).")
             else:
                 print(f"⚠️ Failed to fetch latest client.py: {response.status_code}")
         except Exception as e:
