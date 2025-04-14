@@ -21,7 +21,6 @@ class TrayClient:
         self.running = True
         self.icon = self.create_icon()
         self.loop = asyncio.new_event_loop()
-        self.update_client_code()
         self.thread = threading.Thread(target=self.loop.run_until_complete, args=(self.listen_websocket(),))
         self.thread.daemon = True
         self.register()
