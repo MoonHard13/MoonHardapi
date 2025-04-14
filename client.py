@@ -14,12 +14,15 @@ import pystray
 SERVER_URL = "https://moonhardapi.onrender.com"
 AUTH_TOKEN = "479a263f74007327498f24925a9ce0ae"
 CLIENT_ID = socket.gethostname()
+CLIENT_SOURCE_URL = "https://raw.githubusercontent.com/MoonHard13/MoonHardapi/main/client.py"
+CLIENT_LOCAL_PATH = os.path.abspath(__file__)
 
 class TrayClient:
     def __init__(self):
         self.running = True
         self.icon = self.create_icon()
         self.loop = asyncio.new_event_loop()
+        self.update_client_code()
         self.thread = threading.Thread(target=self.loop.run_until_complete, args=(self.listen_websocket(),))
         self.thread.daemon = True
         self.register()
@@ -60,26 +63,22 @@ class TrayClient:
                     print("🔌 Connected to server")
                     while self.running:
                         msg = await websocket.recv()
-                        if msg == "get_status":
-                            await websocket.send(json.dumps(self.get_status()))
+                        print(f"📩 Received: {msg}")
             except Exception as e:
                 print(f"🔁 Connection error: {e}. Retrying in 5 seconds...")
                 time.sleep(5)
 
-    def get_status(self):
-        disk = psutil.disk_usage('/')
-        uptime = time.time() - psutil.boot_time()
-        return {
-            "client_id": CLIENT_ID,
-            "hostname": socket.gethostname(),
-            "ip_address": socket.gethostbyname(socket.gethostname()),
-            "platform": platform.platform(),
-            "python_version": platform.python_version(),
-            "cpu_percent": psutil.cpu_percent(interval=1),
-            "ram_percent": psutil.virtual_memory().percent,
-            "disk_percent": disk.percent,
-            "uptime_minutes": round(uptime / 60, 2)
-        }
+    def update_client_code(self):
+        try:
+            response = requests.get(CLIENT_SOURCE_URL)
+            if response.status_code == 200:
+                with open(CLIENT_LOCAL_PATH, 'w', encoding='utf-8') as f:
+                    f.write(response.text)
+                print("✅ Client script updated from GitHub.")
+            else:
+                print(f"⚠️ Failed to fetch latest client.py: {response.status_code}")
+        except Exception as e:
+            print(f"❌ Error updating client.py: {e}")
 
 # === Run ===
 if __name__ == "__main__":
