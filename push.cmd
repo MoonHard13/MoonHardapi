@@ -1,5 +1,4 @@
 git add .
-git commit -m "Initial commit for FastAPI server"
-git remote add origin https://github.com/MoonHard13/MoonHardapi.git
-git branch -M main
-git push -u origin main
+git commit -m "Push full project folder with latest updates"
+git push
+pause
