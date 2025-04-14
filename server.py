@@ -1,8 +1,24 @@
+import logging
+from logging.handlers import TimedRotatingFileHandler
+import os
+
+# === Δημιουργία φακέλου logs ===
+os.makedirs("logs", exist_ok=True)
+
+# === Ρύθμιση log handler ===
+log_path = os.path.join("logs", "moonhard.log")
+log_handler = TimedRotatingFileHandler(log_path, when="midnight", backupCount=7, encoding="utf-8")
+formatter = logging.Formatter("%(asctime)s | %(levelname)s | %(message)s")
+log_handler.setFormatter(formatter)
+
+logger = logging.getLogger("moonhard")
+logger.setLevel(logging.INFO)
+logger.addHandler(log_handler)
+
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request, HTTPException, Query
 from fastapi.responses import JSONResponse
 from typing import Dict
 from datetime import datetime
-from fastapi import Body
 import asyncio
 import json
 
@@ -42,14 +58,14 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str, token: str = 
     connected_clients[client_id]["websocket"] = websocket
     connected_clients[client_id]["last_seen"] = datetime.utcnow()
 
-    print(f"🟢 WebSocket connected: {client_id}")
+    logger.info(f"🟢 WebSocket connected: {client_id}")
     try:
         while True:
             data = await websocket.receive_text()
-            print(f"📩 {client_id}: {data}")
+            logger.info(f"📩 {client_id}: {data}")
             connected_clients[client_id]["last_seen"] = datetime.utcnow()
     except WebSocketDisconnect:
-        print(f"🔴 {client_id} disconnected")
+        logger.info(f"🔴 {client_id} disconnected")
         connected_clients[client_id]["websocket"] = None
 
 @app.post("/send/{client_id}")
@@ -65,26 +81,15 @@ async def send_command(client_id: str, command: str, token: str = Query(...)):
     except:
         return JSONResponse(status_code=500, content={"error": "Failed to send command"})
 
-
-
 @app.post("/broadcast")
-async def broadcast_command(
-    token: str = Query(...),
-    command: str = Query(None),
-    body: dict = Body(None)
-):
+async def broadcast_command(command: str, token: str = Query(...)):
     check_token(token)
-    cmd = command or (body.get("command") if body else None)
-    if not cmd:
-        raise HTTPException(status_code=400, detail="Command is required")
-
     sent = 0
     for cid, client in connected_clients.items():
         if client["websocket"]:
             try:
-                await client["websocket"].send_text(cmd)
+                await client["websocket"].send_text(command)
                 sent += 1
             except:
                 continue
-    return {"message": f"📡 Sent '{cmd}' to {sent} clients"}
-
+    return {"message": f"📡 Sent '{command}' to {sent} clients"}
