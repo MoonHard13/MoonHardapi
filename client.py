@@ -22,6 +22,8 @@ class TrayClient:
         self.loop = asyncio.new_event_loop()
         self.thread = threading.Thread(target=self.loop.run_until_complete, args=(self.listen_websocket(),))
         self.thread.daemon = True
+        self.register()
+        self.thread.start()
 
     def create_icon(self):
         # Create a simple icon
@@ -30,29 +32,16 @@ class TrayClient:
         draw.rectangle((8, 8, 56, 56), fill="green")
 
         menu = pystray.Menu(
-            pystray.MenuItem("Start", self.start),
-            pystray.MenuItem("Stop", self.stop),
             pystray.MenuItem("Exit", self.exit)
         )
 
         return pystray.Icon("Moonhard Client", image, "Moonhard Tray Client", menu)
-
-    def start(self, icon=None, item=None):
-        if not self.thread.is_alive():
-            self.running = True
-            self.thread = threading.Thread(target=self.loop.run_until_complete, args=(self.listen_websocket(),))
-            self.thread.daemon = True
-            self.thread.start()
-
-    def stop(self, icon=None, item=None):
-        self.running = False
 
     def exit(self, icon=None, item=None):
         self.running = False
         self.icon.stop()
 
     def run(self):
-        self.register()
         self.icon.run()
 
     def register(self):
