@@ -14,7 +14,6 @@ import pystray
 SERVER_URL = "https://moonhardapi.onrender.com"
 AUTH_TOKEN = "479a263f74007327498f24925a9ce0ae"
 CLIENT_ID = socket.gethostname()
-CLIENT_SOURCE_URL = "https://raw.githubusercontent.com/MoonHard13/MoonHardapi/main/client.py"
 CLIENT_LOCAL_PATH = os.path.abspath(__file__)
 
 class TrayClient:
@@ -67,19 +66,6 @@ class TrayClient:
             except Exception as e:
                 print(f"🔁 Connection error: {e}. Retrying in 5 seconds...")
                 time.sleep(5)
-
-    def update_client_code(self):
-        try:
-            response = requests.get(CLIENT_SOURCE_URL)
-            if response.status_code == 200:
-                temp_path = CLIENT_LOCAL_PATH + ".new"
-                with open(temp_path, 'w', encoding='utf-8') as f:
-                    f.write(response.text)
-                print("✅ Downloaded new client.py (will apply on next restart).")
-            else:
-                print(f"⚠️ Failed to fetch latest client.py: {response.status_code}")
-        except Exception as e:
-            print(f"❌ Error updating client.py: {e}")
 
 # === Run ===
 if __name__ == "__main__":
