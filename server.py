@@ -2,6 +2,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request, HTTPExcept
 from fastapi.responses import JSONResponse
 from typing import Dict
 from datetime import datetime
+from fastapi import Body
 import asyncio
 import json
 
@@ -64,15 +65,26 @@ async def send_command(client_id: str, command: str, token: str = Query(...)):
     except:
         return JSONResponse(status_code=500, content={"error": "Failed to send command"})
 
+
+
 @app.post("/broadcast")
-async def broadcast_command(command: str, token: str = Query(...)):
+async def broadcast_command(
+    token: str = Query(...),
+    command: str = Query(None),
+    body: dict = Body(None)
+):
     check_token(token)
+    cmd = command or (body.get("command") if body else None)
+    if not cmd:
+        raise HTTPException(status_code=400, detail="Command is required")
+
     sent = 0
     for cid, client in connected_clients.items():
         if client["websocket"]:
             try:
-                await client["websocket"].send_text(command)
+                await client["websocket"].send_text(cmd)
                 sent += 1
             except:
                 continue
-    return {"message": f"📡 Sent '{command}' to {sent} clients"}
+    return {"message": f"📡 Sent '{cmd}' to {sent} clients"}
+
