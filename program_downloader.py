@@ -3,6 +3,7 @@ import json
 import logging
 from pydrive2.auth import GoogleAuth
 from pydrive2.drive import GoogleDrive
+import zipfile
 
 class ProgramDownloader:
     def __init__(self):
@@ -107,6 +108,12 @@ class ProgramDownloader:
             for file in file_list:
                 file_path = os.path.join(self.download_dir, file['title'])
                 file.GetContentFile(file_path)
+                # === Check and unzip if .zip ===
+                if file_path.lower().endswith('.zip'):
+                    extract_to = os.path.join(self.download_dir, program)
+                    os.makedirs(extract_to, exist_ok=True)
+                    self.unzip_file(file_path, extract_to)
+
                 self.logger.info(f"✅ Downloaded {file['title']} to {file_path}")
                 print(f"✅ Downloaded {file['title']} to {file_path}")
 
@@ -114,3 +121,13 @@ class ProgramDownloader:
         if "folders/" in url:
             return url.split("folders/")[1].split("?")[0]
         return None
+
+    def unzip_file(self, zip_path, extract_to):
+    try:
+        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+            zip_ref.extractall(extract_to)
+        self.logger.info(f"📦 Extracted {zip_path} to {extract_to}")
+        print(f"📦 Extracted {zip_path} to {extract_to}")
+    except Exception as e:
+        self.logger.error(f"❌ Failed to unzip {zip_path}: {e}")
+        print(f"❌ Failed to unzip {zip_path}: {e}")
