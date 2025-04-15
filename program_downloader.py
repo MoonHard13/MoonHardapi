@@ -201,20 +201,32 @@ class ProgramDownloader:
             print(f"❌ Failed to unzip {zip_path}: {e}")
             
     def cleanup_existing_versions(self, pattern_str):
-        print(f"🧹 Cleaning up with pattern: {pattern_str}")
+        print(f"\n🧹 [CLEANUP] Using pattern: {pattern_str}")
+        print(f"📁 Current contents of {self.download_dir}:")
+
+        for entry in os.listdir(self.download_dir):
+            print(f"  - {entry}")
+
         patterns = pattern_str.split(", ")
         for pattern in patterns:
             full_pattern = os.path.join(self.download_dir, pattern)
             print(f"🔍 Searching with glob: {full_pattern}")
             files = glob.glob(full_pattern)
-            print(f"🔎 Found files/folders: {files}")
+
+            if not files:
+                print("⚠️ No matches found for cleanup.")
+            else:
+                print(f"🔎 Matches found: {files}")
+
             for file in files:
                 try:
                     if os.path.isfile(file):
                         os.remove(file)
+                        print(f"🗑️ Deleted file: {file}")
                     elif os.path.isdir(file):
                         shutil.rmtree(file)
+                        print(f"🗑️ Deleted folder: {file}")
                     self.logger.info(f"🗑️ Διεγράφη: {file}")
-                    print(f"🗑️ Διεγράφη: {file}")
                 except Exception as e:
+                    print(f"❌ Failed to delete {file}: {e}")
                     self.logger.error(f"[Σφάλμα] Διαγραφής {file}: {e}")
