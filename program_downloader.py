@@ -34,7 +34,7 @@ class ProgramDownloader:
     def ensure_directories(self):
         if not os.path.exists(self.download_dir):
             os.makedirs(self.download_dir)
-            os.system(f'attrib -R -S -H \"{self.download_dir}\"')
+            os.system(f'attrib -R "{self.download_dir}"')
             os.system(f'net share SunsoftSetups="{self.download_dir}" /GRANT:Everyone,FULL')
         if not os.path.exists(self.base_dir):
             os.makedirs(self.base_dir)
@@ -42,12 +42,22 @@ class ProgramDownloader:
         client_secrets_path = os.path.join(self.base_dir, "client_secrets.json")
         if not os.path.exists(client_secrets_path):
             with open(client_secrets_path, 'w', encoding='utf-8') as f:
-                json.dump({"udl_path": "C:/ProgramData/Sunsoft/Back Office/Initial.udl"}, f, indent=2)
+                json.dump({
+                    "installed": {
+                        "client_id": "1095484660040-59otujsocc2ea86e6gph733okmofig8g.apps.googleusercontent.com",
+                        "project_id": "sunsoft-downloader",
+                        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                        "token_uri": "https://oauth2.googleapis.com/token",
+                        "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+                        "client_secret": "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",
+                        "redirect_uris": ["http://localhost"]
+                    }
+                }, f, indent=2)
 
         creds_path = os.path.join(self.base_dir, "mycreds.txt")
         if not os.path.exists(creds_path):
             with open(creds_path, 'w', encoding='utf-8') as f:
-                f.write('{"access_token": "ya29.a0AZYkNZhyy0os_8qdE-TMrpUx71MdH8Mp_YYHO7nN76LgVyWLy5-Va079uR4m8M0cSM8TUhl3ac9PDmTHY1fv3fML6NDD9aaaqmTizh4ajuFIoeTU9QdXSDoqWxMUsQvkkg_XSM2UeIHltcbOJBp1Y-s7xXetTNHU_rS1iVuxaCgYKARwSARISFQHGX2MiXf0kE6N72bgLAjjEfcPGfQ0175", "client_id": "1095484660040-59otujsocc2ea86e6gph733okmofig8g.apps.googleusercontent.com", "client_secret": "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", "refresh_token": "1//09tJDoXRsfc_aCgYIARAAGAkSNwF-L9IrFH44Pjm1cshO3wu1zN83AXcIiKC096f51iyGPJuyLpJE4HjyO9ZKOArD5Kwx9dUVGwE", "token_expiry": "2025-04-14T12:44:36Z", "token_uri": "https://oauth2.googleapis.com/token", "user_agent": null, "revoke_uri": "https://oauth2.googleapis.com/revoke", "id_token": null, "id_token_jwt": null, "token_response": {"access_token": "ya29.a0AZYkNZhyy0os_8qdE-TMrpUx71MdH8Mp_YYHO7nN76LgVyWLy5-Va079uR4m8M0cSM8TUhl3ac9PDmTHY1fv3fML6NDD9aaaqmTizh4ajuFIoeTU9QdXSDoqWxMUsQvkkg_XSM2UeIHltcbOJBp1Y-s7xXetTNHU_rS1iVuxaCgYKARwSARISFQHGX2MiXf0kE6N72bgLAjjEfcPGfQ0175", "expires_in": 3599, "refresh_token": "1//09tJDoXRsfc_aCgYIARAAGAkSNwF-L9IrFH44Pjm1cshO3wu1nN83AXcIiKC096f51iyGPJuyLpJE4HjyO9ZKOArD5Kwx9dUVGwE", "scope": "https://www.googleapis.com/auth/drive", "token_type": "Bearer", "refresh_token_expires_in": 604799}, "scopes": ["https://www.googleapis.com/auth/drive"], "token_info_uri": "https://oauth2.googleapis.com/tokeninfo", "invalid": false, "_class": "OAuth2Credentials", "_module": "oauth2client.client"}')
+                f.write('{"access_token": "ya29.a0AZYkNZhyy0os_8qdE-TMrpUx71MdH8Mp_YYHO7nN76LgVyWLy5-Va079uR4m8M0cSM8TUhl3ac9PDmTHY1fv3fML6NDD9aaaqmTizh4ajuFIoeTU9QdXSDoqWxMUsQvkkg_XSM2UeIHltcbOJBp1Y-s7xXetTNHU_rS1iVuxaCgYKARwSARISFQHGX2MiXf0kE6N72bgLAjjEfcPGfQ0175", "client_id": "1095484660040-59otujsocc2ea86e6gph733okmofig8g.apps.googleusercontent.com", "client_secret": "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", "refresh_token": "1//09tJDoXRsfc_aCgYIARAAGAkSNwF-L9IrFH44Pjm1cshO3wu1nN83AXcIiKC096f51iyGPJuyLpJE4HjyO9ZKOArD5Kwx9dUVGwE", "token_expiry": "2025-04-14T12:44:36Z", "token_uri": "https://oauth2.googleapis.com/token", "user_agent": null, "revoke_uri": "https://oauth2.googleapis.com/revoke", "id_token": null, "id_token_jwt": null, "token_response": {"access_token": "ya29.a0AZYkNZhyy0os_8qdE-TMrpUx71MdH8Mp_YYHO7nN76LgVyWLy5-Va079uR4m8M0cSM8TUhl3ac9PDmTHY1fv3fML6NDD9aaaqmTizh4ajuFIoeTU9QdXSDoqWxMUsQvkkg_XSM2UeIHltcbOJBp1Y-s7xXetTNHU_rS1iVuxaCgYKARwSARISFQHGX2MiXf0kE6N72bgLAjjEfcPGfQ0175", "expires_in": 3599, "refresh_token": "1//09tJDoXRsfc_aCgYIARAAGAkSNwF-L9IrFH44Pjm1cshO3wu1nN83AXcIiKC096f51iyGPJuyLpJE4HjyO9ZKOArD5Kwx9dUVGwE", "scope": "https://www.googleapis.com/auth/drive", "token_type": "Bearer", "refresh_token_expires_in": 604799}, "scopes": ["https://www.googleapis.com/auth/drive"], "token_info_uri": "https://oauth2.googleapis.com/tokeninfo", "invalid": false, "_class": "OAuth2Credentials", "_module": "oauth2client.client"}')
 
     def setup_logger(self):
         log_path = os.path.join(self.base_dir, "program_downloader.log")
@@ -66,7 +76,6 @@ class ProgramDownloader:
 
         gauth = GoogleAuth()
         gauth.LoadClientConfigFile(secrets_path)
-
         gauth.LoadCredentialsFile(creds_path)
 
         if gauth.credentials is None:
