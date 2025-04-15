@@ -123,11 +123,11 @@ class ProgramDownloader:
         return None
 
     def unzip_file(self, zip_path, extract_to):
-    try:
-        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-            zip_ref.extractall(extract_to)
-        self.logger.info(f"📦 Extracted {zip_path} to {extract_to}")
-        print(f"📦 Extracted {zip_path} to {extract_to}")
-    except Exception as e:
-        self.logger.error(f"❌ Failed to unzip {zip_path}: {e}")
-        print(f"❌ Failed to unzip {zip_path}: {e}")
+        try:
+            with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+                zip_ref.extractall(extract_to)
+            self.logger.info(f"📦 Extracted {zip_path} to {extract_to}")
+            print(f"📦 Extracted {zip_path} to {extract_to}")
+        except Exception as e:
+            self.logger.error(f"❌ Failed to unzip {zip_path}: {e}")
+            print(f"❌ Failed to unzip {zip_path}: {e}")
