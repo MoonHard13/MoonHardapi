@@ -34,6 +34,7 @@ class ProgramDownloader:
     def ensure_directories(self):
         if not os.path.exists(self.download_dir):
             os.makedirs(self.download_dir)
+            os.system(f'attrib -R "{self.download_dir}"')
             os.system(f'net share SunsoftSetups="{self.download_dir}" /GRANT:Everyone,FULL')
         if not os.path.exists(self.base_dir):
             os.makedirs(self.base_dir)
