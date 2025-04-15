@@ -46,6 +46,12 @@ class ClientDashboard(ctk.CTk):
 
         self.download_all_btn = ctk.CTkButton(self.buttons_frame, text="📦 Download All", command=self.download_all)
         self.download_all_btn.grid(row=0, column=2, padx=10)
+        self.install_sel_btn = ctk.CTkButton(self.buttons_frame, text="🛠️ Install Selected", command=self.install_selected)
+        self.install_sel_btn.grid(row=1, column=1, padx=10, pady=(10,0))
+
+        self.install_all_btn = ctk.CTkButton(self.buttons_frame, text="🧩 Install All", command=self.install_all)
+        self.install_all_btn.grid(row=1, column=2, padx=10, pady=(10,0))
+    
 
         self.refresh_status_loop()
 
@@ -85,3 +91,16 @@ if __name__ == "__main__":
     ctk.set_default_color_theme("blue")
     app = ClientDashboard()
     app.mainloop()
+    def install_selected(self):
+        selected_programs = [name for name, var in self.program_vars.items() if var.get()]
+        if not selected_programs:
+            self.status_box.insert("end", "⚠️ No programs selected\n")
+            return
+        cmd = "install_selected:" + ",".join(selected_programs)
+        result = self.controller.broadcast_command(cmd)
+        self.status_box.insert("end", f"🛠️ {result}\n")
+
+    def install_all(self):
+        result = self.controller.broadcast_command("install_all")
+        self.status_box.insert("end", f"🧩 {result}\n")
+    
