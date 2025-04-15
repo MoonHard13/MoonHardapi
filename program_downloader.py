@@ -6,6 +6,7 @@ from pydrive2.drive import GoogleDrive
 import zipfile
 import re
 import glob
+import shutil
 
 class ProgramDownloader:
     def __init__(self):
@@ -143,20 +144,6 @@ class ProgramDownloader:
             gauth.SaveCredentialsFile(creds_path)
 
         return GoogleDrive(gauth)
-        
-    def cleanup_existing_versions(self, pattern_str):
-        patterns = pattern_str.split(", ")
-        for pattern in patterns:
-            files = glob.glob(os.path.join(self.download_dir, pattern))
-            for file in files:
-                try:
-                    if os.path.isfile(file):
-                        os.remove(file)
-                    elif os.path.isdir(file):
-                        shutil.rmtree(file)
-                    self.logger.info(f"🗑️ Διεγράφη: {file}")
-                except Exception as e:
-                    self.logger.error(f"[Σφάλμα] Διαγραφής {file}: {e}")
 
     def download_programs(self, program_list):
         print("🚀 download_programs called with:", program_list)
@@ -224,5 +211,6 @@ class ProgramDownloader:
                     elif os.path.isdir(file):
                         shutil.rmtree(file)
                     self.logger.info(f"🗑️ Διεγράφη: {file}")
+                    print(f"🧹 Cleanup completed for: {pattern_str}")
                 except Exception as e:
                     self.logger.error(f"[Σφάλμα] Διαγραφής {file}: {e}")
