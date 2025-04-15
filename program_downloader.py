@@ -21,7 +21,6 @@ class ProgramDownloader:
             "Copy S1DC": "https://drive.google.com/drive/folders/1SV7WVJka1Ux9Cz1NracRmPqXIR-Lnh7S"
         }
 
-        # Define directories first
         self.download_dir = r"C:\SunsoftSetups"
         self.base_dir = os.path.join(self.download_dir, "MoonHardRemote")
 
@@ -38,6 +37,10 @@ class ProgramDownloader:
             os.system(f'net share SunsoftSetups="{self.download_dir}" /GRANT:Everyone,FULL')
         if not os.path.exists(self.base_dir):
             os.makedirs(self.base_dir)
+        client_secrets_path = os.path.join(self.base_dir, "client_secrets.json")
+        if not os.path.exists(client_secrets_path):
+            from shutil import copyfile
+            copyfile("client_secrets.json", client_secrets_path)
 
     def setup_logger(self):
         log_path = os.path.join(self.base_dir, "program_downloader.log")
@@ -52,8 +55,10 @@ class ProgramDownloader:
 
     def authenticate_drive(self):
         creds_path = os.path.join(self.base_dir, "mycreds.txt")
+        secrets_path = os.path.join(self.base_dir, "client_secrets.json")
 
         gauth = GoogleAuth()
+        gauth.LoadClientConfigFile(secrets_path)
 
         if not os.path.exists(creds_path):
             print("🔐 First-time auth: opening browser to authenticate...")
