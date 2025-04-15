@@ -128,6 +128,12 @@ class ProgramDownloader:
                 zip_ref.extractall(extract_to)
             self.logger.info(f"📦 Extracted {zip_path} to {extract_to}")
             print(f"📦 Extracted {zip_path} to {extract_to}")
+
+            # ✅ Delete the original zip
+            os.remove(zip_path)
+            self.logger.info(f"🗑️ Deleted zip file: {zip_path}")
+            print(f"🗑️ Deleted zip file: {zip_path}")
+
         except Exception as e:
             self.logger.error(f"❌ Failed to unzip {zip_path}: {e}")
             print(f"❌ Failed to unzip {zip_path}: {e}")
