@@ -22,7 +22,7 @@ class ProgramDownloader:
         }
 
         # Define directories first
-        self.download_dir = r"C:\\SunsoftSetups"
+        self.download_dir = r"C:\SunsoftSetups"
         self.base_dir = os.path.join(self.download_dir, "MoonHardRemote")
 
         print("🛠 Creating and checking paths:", self.download_dir, self.base_dir)
@@ -52,10 +52,10 @@ class ProgramDownloader:
     def authenticate_drive(self):
         creds_path = os.path.join(self.base_dir, "mycreds.txt")
         if not os.path.exists(creds_path):
-            with open(creds_path, 'w', encoding='utf-8') as f:
-                f.write('{}')
-        gauth = GoogleAuth()
-        gauth.LoadCredentialsFile(creds_path)
+            print("🔐 First-time auth: opening browser to generate credentials...")
+            gauth.LocalWebserverAuth()
+            gauth.SaveCredentialsFile(creds_path)
+            return GoogleDrive(gauth)
         if gauth.credentials is None:
             gauth.LocalWebserverAuth()
         elif gauth.access_token_expired:
