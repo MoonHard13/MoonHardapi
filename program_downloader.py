@@ -5,7 +5,6 @@ from pydrive2.drive import GoogleDrive
 
 class ProgramDownloader:
     def __init__(self):
-        print("🛠 Creating and checking paths:", self.download_dir)
         self.download_links = {
             "Amvrosia Service": "https://drive.google.com/drive/folders/1LFaI84SbgPdTAGfkN1VKi8znqShpG_VV",
             "SnService": "https://drive.google.com/drive/folders/1zh10RewQXVAVsqFshpy8Kd6s8v88czfQ",
@@ -22,8 +21,12 @@ class ProgramDownloader:
             "Copy S1DC": "https://drive.google.com/drive/folders/1SV7WVJka1Ux9Cz1NracRmPqXIR-Lnh7S"
         }
 
-        self.base_dir = r"C:\\SunsoftSetups\\MoonHardRemote"
+        # Define directories first
         self.download_dir = r"C:\\SunsoftSetups"
+        self.base_dir = os.path.join(self.download_dir, "MoonHardRemote")
+
+        print("🛠 Creating and checking paths:", self.download_dir, self.base_dir)
+
         self.ensure_directories()
         self.logger = self.setup_logger()
         self.drive = self.authenticate_drive()
@@ -48,10 +51,10 @@ class ProgramDownloader:
 
     def authenticate_drive(self):
         creds_path = os.path.join(self.base_dir, "mycreds.txt")
-        gauth = GoogleAuth()
         if not os.path.exists(creds_path):
             with open(creds_path, 'w', encoding='utf-8') as f:
                 f.write('{}')
+        gauth = GoogleAuth()
         gauth.LoadCredentialsFile(creds_path)
         if gauth.credentials is None:
             gauth.LocalWebserverAuth()
