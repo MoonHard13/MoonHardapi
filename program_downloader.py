@@ -202,11 +202,7 @@ class ProgramDownloader:
             
     def cleanup_existing_versions(self, pattern_str):
         print(f"\n🧹 [CLEANUP] Using pattern: {pattern_str}")
-        print(f"📁 Current contents of {self.download_dir}:")
-
-        for entry in os.listdir(self.download_dir):
-            print(f"  - {entry}")
-
+        
         patterns = pattern_str.split(", ")
         for pattern in patterns:
             full_pattern = os.path.join(self.download_dir, pattern)
