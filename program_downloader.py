@@ -70,21 +70,37 @@ class ProgramDownloader:
         return logging.getLogger("ProgramDownloader")
 
     def authenticate_drive(self):
+        from pydrive2.auth import GoogleAuth
+        from pydrive2.drive import GoogleDrive
+
         creds_path = os.path.join(self.base_dir, "mycreds.txt")
-        secrets_path = os.path.join(self.base_dir, "client_secrets.json")
+        client_secrets_path = os.path.join(self.base_dir, "client_secrets.json")
 
         gauth = GoogleAuth()
-        gauth.LoadClientConfigFile(secrets_path)
+        gauth.LoadClientConfigFile(client_secrets_path)
+
+        if not os.path.exists(creds_path):
+            print("🔐 First-time auth: opening browser...")
+            gauth.LocalWebserverAuth()
+            gauth.SaveCredentialsFile(creds_path)
+            return GoogleDrive(gauth)
+
         gauth.LoadCredentialsFile(creds_path)
 
-        if gauth.credentials is None:
+        try:
+            if gauth.access_token_expired or gauth.credentials is None:
+                print("🔄 Access token expired or missing. Attempting silent refresh...")
+                gauth.Refresh()
+                gauth.SaveCredentialsFile(creds_path)
+                print("✅ Token refreshed successfully.")
+            else:
+                gauth.Authorize()
+        except Exception as e:
+            print(f"❌ Silent token refresh failed: {e}")
+            print("🌐 Re-authenticating via browser...")
             gauth.LocalWebserverAuth()
-        elif gauth.access_token_expired:
-            gauth.Refresh()
-        else:
-            gauth.Authorize()
+            gauth.SaveCredentialsFile(creds_path)
 
-        gauth.SaveCredentialsFile(creds_path)
         return GoogleDrive(gauth)
 
     def download_programs(self, program_list):
