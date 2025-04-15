@@ -10,6 +10,8 @@ from StatisticsInstaller import StatisticsInstaller
 from CallServerHostInstaller import CallServerHostInstaller
 from CallServerClientInstaller import CallServerClientInstaller
 from SamtecInstaller import SamtecInstaller
+from MainAppsInstaller import MainAppsInstaller
+
 
 class InstallerManager:
     def __init__(self):
@@ -27,6 +29,7 @@ class InstallerManager:
             "CallServer Host": CallServerHostInstaller,
             "CallServer Client": CallServerClientInstaller,
             "Samtec": SamtecInstaller,
+            "Main Apps": MainAppsInstaller,
         }
 
     def log(self, msg):
