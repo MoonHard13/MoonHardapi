@@ -60,7 +60,7 @@ class ProgramDownloader:
             },
             "Copy S1DC": {
                 "link": "https://drive.google.com/drive/folders/1SV7WVJka1Ux9Cz1NracRmPqXIR-Lnh7S?usp=sharing",
-                "pattern": "s1dc.zip"
+                "pattern": "s1dc"
             }
         }
 
@@ -169,8 +169,6 @@ class ProgramDownloader:
                 continue
 
             # ✅ Delete previous versions first
-            self.cleanup_existing_versions(program)
-
             link = entry["link"]
             pattern = entry["pattern"]
             self.cleanup_existing_versions(pattern)
