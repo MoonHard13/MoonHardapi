@@ -51,17 +51,24 @@ class ProgramDownloader:
 
     def authenticate_drive(self):
         creds_path = os.path.join(self.base_dir, "mycreds.txt")
+
+        gauth = GoogleAuth()
+
         if not os.path.exists(creds_path):
-            print("🔐 First-time auth: opening browser to generate credentials...")
+            print("🔐 First-time auth: opening browser to authenticate...")
             gauth.LocalWebserverAuth()
             gauth.SaveCredentialsFile(creds_path)
             return GoogleDrive(gauth)
+
+        gauth.LoadCredentialsFile(creds_path)
+
         if gauth.credentials is None:
             gauth.LocalWebserverAuth()
         elif gauth.access_token_expired:
             gauth.Refresh()
         else:
             gauth.Authorize()
+
         gauth.SaveCredentialsFile(creds_path)
         return GoogleDrive(gauth)
 
