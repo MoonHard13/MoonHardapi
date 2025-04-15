@@ -5,6 +5,7 @@ from pydrive2.drive import GoogleDrive
 
 class ProgramDownloader:
     def __init__(self):
+        print("🛠 Creating and checking paths:", self.download_dir)
         self.download_links = {
             "Amvrosia Service": "https://drive.google.com/drive/folders/1LFaI84SbgPdTAGfkN1VKi8znqShpG_VV",
             "SnService": "https://drive.google.com/drive/folders/1zh10RewQXVAVsqFshpy8Kd6s8v88czfQ",
@@ -62,6 +63,7 @@ class ProgramDownloader:
         return GoogleDrive(gauth)
 
     def download_programs(self, program_list):
+        print("🚀 download_programs called with:", program_list)
         for program in program_list:
             link = self.download_links.get(program)
             if not link:
