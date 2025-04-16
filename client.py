@@ -24,6 +24,12 @@ class TrayClient:
         self.thread = threading.Thread(target=self.loop.run_until_complete, args=(self.listen_websocket(),))
         self.thread.daemon = True
         self.register()
+        from command_handler import CommandHandler
+        from program_downloader import ProgramDownloader
+
+        self.downloader = ProgramDownloader()
+        self.command_handler = CommandHandler(self.downloader)
+
         self.thread.start()
 
     def create_icon(self):
@@ -61,6 +67,7 @@ class TrayClient:
                     print("🔌 Connected to server")
                     while self.running:
                         msg = await websocket.recv()
+                        self.command_handler.handle(msg)
                         print(f"📩 Received: {msg}")
             except Exception as e:
                 print(f"🔁 Connection error: {e}. Retrying in 5 seconds...")
