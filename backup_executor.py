@@ -13,7 +13,10 @@ class BackupExecutor:
         try:
             with open(self.config_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
-                return data["AppSettings"]["BOConnections"][0]["DatabaseConnection"]
+                conn = data["AppSettings"]["BOConnections"][0]["DatabaseConnection"]
+                if "Driver=" not in conn:
+                    conn = f"Driver={{ODBC Driver 17 for SQL Server}};{conn}"
+                return conn
         except Exception as e:
             print(f"❌ Σφάλμα ανάγνωσης JSON: {e}")
             return None
