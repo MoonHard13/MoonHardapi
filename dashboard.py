@@ -1,6 +1,6 @@
 import customtkinter as ctk
 import threading
-import json
+import json 
 import time
 from dashboard_controller import DashboardController
 from program_registry import PROGRAMS
