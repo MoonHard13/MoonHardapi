@@ -1,6 +1,6 @@
 import customtkinter as ctk
 import threading
-import json
+import json 
 import time
 from dashboard_controller import DashboardController
 from program_registry import PROGRAMS
@@ -67,6 +67,10 @@ class ClientDashboard(ctk.CTk):
 
         self.status_box = ctk.CTkTextbox(self.control_panel, height=180)
         self.status_box.pack(fill="both", expand=True, padx=10, pady=(0, 10))
+        
+        self.backup_btn = ctk.CTkButton(self.buttons_frame, text="💾 Backup", command=self.backup_command, width=140)
+        self.backup_btn.grid(row=2, column=1, padx=5, pady=5)
+       
 
         self.refresh_status_loop()
 
@@ -114,6 +118,11 @@ class ClientDashboard(ctk.CTk):
     def download_all(self):
         result = self.controller.broadcast_command("download_all")
         self.status_box.insert("end", f"📦 {result}\n")
+
+    def backup_command(self):
+        result = self.controller.broadcast_command("backup_now")
+        self.status_box.insert("end", f"💾 {result}\n")
+
 
     def refresh_status_loop(self):
         def loop():

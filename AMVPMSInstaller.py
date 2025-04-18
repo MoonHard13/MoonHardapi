@@ -3,7 +3,7 @@ import winreg
 
 class AMVPMSInstaller:
     def __init__(self, logger_func):
-        self.base_directory = r"C:\SunsoftSetups"
+        self.base_directory = r"C:\sunsoftSetups"
         self.logger = logger_func
 
     def log(self, msg):

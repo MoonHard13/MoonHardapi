@@ -22,5 +22,8 @@ class CommandHandler:
             programs = [p.strip() for p in msg.split(":", 1)[1].split(",")]
             self.installer.install_programs(programs)
             print(f"✅ Install triggered for: {', '.join(programs)}")
+        elif msg == "backup_now":
+            from backup_executor import BackupExecutor
+            BackupExecutor().run_backup()
         else:
             print(f"⚠️ Unknown command: {msg}")

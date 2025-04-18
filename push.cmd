@@ -1,5 +1,5 @@
-cd C:\Users\skranis\Desktop\moonhard
+cd C:\Users\dmakos\Desktop\moonhard
 git add .
 git commit -m "Push full project folder with latest updates"
-git push
+git pull
 pause
