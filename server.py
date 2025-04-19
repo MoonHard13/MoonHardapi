@@ -64,12 +64,19 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str, token: str = 
     logger.info(f"🟢 WebSocket connected: {client_id}")
     try:
         while True:
-            data = await websocket.receive_text()
-            logger.info(f"📩 {client_id}: {data}")
-            connected_clients[client_id]["last_seen"] = datetime.utcnow()
-    except WebSocketDisconnect:
-        logger.info(f"🔴 {client_id} disconnected")
-        connected_clients[client_id]["websocket"] = None
+            try:
+                message = await websocket.receive_text()
+                print(f"📨 {client_id} → {message}")
+                connected_clients[client_id]["last_message"] = message
+            except Exception as e:
+                print(f"⚠️ Error receiving from {client_id}: {e}")
+                break
+    except Exception as outer_e:
+        logger.error(f"⚠️ Unexpected error in WebSocket loop for {client_id}: {outer_e}")
+    finally:
+        logger.info(f"🔴 WebSocket disconnected: {client_id}")
+        if client_id in connected_clients:
+            connected_clients[client_id]["websocket"] = None
 
 @app.post("/send/{client_id}")
 async def send_command(client_id: str, command: str, token: str = Query(...)):

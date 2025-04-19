@@ -67,6 +67,12 @@ class TrayClient:
                     print("🔌 Connected to server")
                     while self.running:
                         msg = await websocket.recv()
+                        print(f"📩 Received: {msg}")
+
+                        if msg == "backup_now":
+                            from backup_executor import BackupExecutor
+                            BackupExecutor().run_backup()
+                            await websocket.send(f"backup_done:{CLIENT_ID}")
                         self.command_handler.handle(msg)
                         print(f"📩 Received: {msg}")
             except Exception as e:
