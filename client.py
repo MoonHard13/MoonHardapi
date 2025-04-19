@@ -69,13 +69,23 @@ class TrayClient:
 
                     async def sender():
                         while self.running:
-                            msg = await self.message_queue.get()
-                            await websocket.send(msg)
+                            try:
+                                # If nothing to send, send a ping every 20 seconds
+                                try:
+                                    msg = await asyncio.wait_for(self.message_queue.get(), timeout=20)
+                                    await websocket.send(msg)
+                                except asyncio.TimeoutError:
+                                    await websocket.send("ping")
+                            except Exception as e:
+                                print(f"❌ Sender error: {e}")
+                                break
 
                     async def receiver():
                         while self.running:
                             try:
                                 msg = await websocket.recv()
+                                if msg == "ping":
+                                    continue
                                 print(f"📩 Received: {msg}")
 
                                 if msg == "backup_now":
