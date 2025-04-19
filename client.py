@@ -66,36 +66,31 @@ class TrayClient:
             try:
                 async with websockets.connect(uri) as websocket:
                     print("🔌 Connected to server")
-                    while self.running:
-                        async with websockets.connect(uri) as websocket:
-                            print("🔌 Connected to server")
 
-                            async def sender():
-                                while self.running:
-                                    msg = await self.message_queue.get()
-                                    await websocket.send(msg)
+                    async def sender():
+                        while self.running:
+                            msg = await self.message_queue.get()
+                            await websocket.send(msg)
 
-                            async def receiver():
-                                while self.running:
-                                    try:
-                                        msg = await websocket.recv()
-                                        print(f"📩 Received: {msg}")
-                                        if msg == "backup_now":
-                                            from backup_executor import BackupExecutor
-                                            BackupExecutor().run_backup()
-                                            await self.message_queue.put("✅ Backup completed")
-                                    except Exception as e:
-                                        print(f"❌ WebSocket receive error: {e}")
-                                        break
+                    async def receiver():
+                        while self.running:
+                            try:
+                                msg = await websocket.recv()
+                                print(f"📩 Received: {msg}")
 
-                            await asyncio.gather(sender(), receiver())
+                                if msg == "backup_now":
+                                    from backup_executor import BackupExecutor
+                                    BackupExecutor().run_backup()
+                                    await self.message_queue.put(f"✅ Backup completed from {CLIENT_ID}")
+                                else:
+                                    self.command_handler.handle(msg)
 
-                        if msg == "backup_now":
-                            from backup_executor import BackupExecutor
-                            BackupExecutor().run_backup()
-                            await websocket.send(f"backup_done:{CLIENT_ID}")
-                        self.command_handler.handle(msg)
-                        print(f"📩 Received: {msg}")
+                            except Exception as e:
+                                print(f"❌ WebSocket receive error: {e}")
+                                break
+
+                    await asyncio.gather(sender(), receiver())
+
             except Exception as e:
                 print(f"🔁 Connection error: {e}. Retrying in 5 seconds...")
                 time.sleep(5)
