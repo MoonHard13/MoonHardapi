@@ -29,7 +29,7 @@ class TrayClient:
         from program_downloader import ProgramDownloader
 
         self.downloader = ProgramDownloader()
-        self.command_handler = CommandHandler(self.downloader)
+        self.command_handler = CommandHandler(self, self.downloader)
 
         self.thread.start()
 
