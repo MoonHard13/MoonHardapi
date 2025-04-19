@@ -42,15 +42,16 @@ async def register(client_id: str, token: str = Query(...)):
 
 @app.get("/status")
 async def get_status():
-    return [
-        {
+    results = []
+    for cid, info in connected_clients.items():
+        result = {
             "client_id": cid,
             "last_seen": info["last_seen"].isoformat(),
             "connected": info["websocket"] is not None,
             "last_message": info.get("last_message", "")
         }
-        for cid, info in connected_clients.items()
-    ]
+        results.append(result)
+    return results
 
 @app.websocket("/ws/{client_id}")
 async def websocket_endpoint(websocket: WebSocket, client_id: str, token: str = Query(...)):
