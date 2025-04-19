@@ -21,6 +21,7 @@ class TrayClient:
         self.running = True
         self.icon = self.create_icon()
         self.loop = asyncio.new_event_loop()
+        self.message_queue = asyncio.Queue()
         self.thread = threading.Thread(target=self.loop.run_until_complete, args=(self.listen_websocket(),))
         self.thread.daemon = True
         self.register()
@@ -66,8 +67,28 @@ class TrayClient:
                 async with websockets.connect(uri) as websocket:
                     print("🔌 Connected to server")
                     while self.running:
-                        msg = await websocket.recv()
-                        print(f"📩 Received: {msg}")
+                        async with websockets.connect(uri) as websocket:
+                            print("🔌 Connected to server")
+
+                            async def sender():
+                                while self.running:
+                                    msg = await self.message_queue.get()
+                                    await websocket.send(msg)
+
+                            async def receiver():
+                                while self.running:
+                                    try:
+                                        msg = await websocket.recv()
+                                        print(f"📩 Received: {msg}")
+                                        if msg == "backup_now":
+                                            from backup_executor import BackupExecutor
+                                            BackupExecutor().run_backup()
+                                            await self.message_queue.put("✅ Backup completed")
+                                    except Exception as e:
+                                        print(f"❌ WebSocket receive error: {e}")
+                                        break
+
+                            await asyncio.gather(sender(), receiver())
 
                         if msg == "backup_now":
                             from backup_executor import BackupExecutor
