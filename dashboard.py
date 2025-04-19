@@ -92,6 +92,8 @@ class ClientDashboard(ctk.CTk):
 
     def refresh_status(self):
         response = self.controller.get_status()
+
+        # clear and rebuild client buttons
         for widget in self.clients_scroll.winfo_children():
             widget.destroy()
 
@@ -103,14 +105,15 @@ class ClientDashboard(ctk.CTk):
                 last_msg = client.get("last_message", "")
                 display_text = f"{client_id} - {last_msg}" if last_msg else client_id
 
-                last_msg = client.get("last_message", "")
-                display_text = f"{client_id} - {last_msg}" if last_msg else client_id
-
                 btn = ctk.CTkButton(self.clients_scroll, text=display_text, width=260,
                                     command=lambda cid=client_id: self.select_client(cid))
-
                 btn.pack(pady=2)
                 self.client_buttons[client_id] = btn
+
+                # NEW: if the message is new, log it to the status box
+                if last_msg and self.last_messages_seen.get(client_id) != last_msg:
+                    self.status_box.insert("end", f"🖥️ {client_id}: {last_msg}\n")
+                    self.last_messages_seen[client_id] = last_msg
 
     def download_selected(self):
         selected_programs = [name for name, var in self.program_vars.items() if var.get()]
