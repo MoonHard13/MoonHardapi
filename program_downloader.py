@@ -114,36 +114,55 @@ class ProgramDownloader:
     def authenticate_drive(self):
         from pydrive2.auth import GoogleAuth
         from pydrive2.drive import GoogleDrive
+        from oauth2client.client import OAuth2WebServerFlow
 
         creds_path = os.path.join(self.base_dir, "mycreds.txt")
-        client_secrets_path = os.path.join(self.base_dir, "client_secrets.json")
 
         gauth = GoogleAuth()
-        gauth.LoadClientConfigFile(client_secrets_path)
+
+        # ⬇️ Inject credentials directly
+        gauth.client_config = {
+            "installed": {
+                "client_id": "1095484660040-59otujsocc2ea86e6gph733okmofig8g.apps.googleusercontent.com",
+                "client_secret": "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",
+                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                "token_uri": "https://oauth2.googleapis.com/token",
+                "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+                "redirect_uris": ["http://localhost"]
+            }
+        }
+
+        gauth.settings["get_refresh_token"] = True
 
         if not os.path.exists(creds_path):
             print("🔐 First-time auth: opening browser...")
+            # Force offline consent flow manually
+            gauth.flow = OAuth2WebServerFlow(
+                client_id=gauth.client_config["installed"]["client_id"],
+                client_secret=gauth.client_config["installed"]["client_secret"],
+                scope=gauth.settings["oauth_scope"],
+                redirect_uri=gauth.client_config["installed"]["redirect_uris"][0]
+            )
+            gauth.flow.client_id = gauth.client_config["installed"]["client_id"]
+            gauth.flow.client_secret = gauth.client_config["installed"]["client_secret"]
+            gauth.flow.params["access_type"] = "offline"
+            gauth.flow.params["prompt"] = "consent"
+
             gauth.LocalWebserverAuth()
             gauth.SaveCredentialsFile(creds_path)
-            return GoogleDrive(gauth)
-
-        gauth.LoadCredentialsFile(creds_path)
-
-        try:
-            if gauth.access_token_expired or gauth.credentials is None:
-                print("🔄 Access token expired or missing. Attempting silent refresh...")
+        else:
+            gauth.LoadCredentialsFile(creds_path)
+            if gauth.credentials is None:
+                gauth.LocalWebserverAuth()
+            elif gauth.access_token_expired:
                 gauth.Refresh()
-                gauth.SaveCredentialsFile(creds_path)
-                print("✅ Token refreshed successfully.")
             else:
                 gauth.Authorize()
-        except Exception as e:
-            print(f"❌ Silent token refresh failed: {e}")
-            print("🌐 Re-authenticating via browser...")
-            gauth.LocalWebserverAuth()
+
             gauth.SaveCredentialsFile(creds_path)
 
         return GoogleDrive(gauth)
+
 
     def download_programs(self, program_list):
         print("🚀 download_programs called with:", program_list)
