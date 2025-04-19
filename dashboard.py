@@ -103,8 +103,12 @@ class ClientDashboard(ctk.CTk):
                 last_msg = client.get("last_message", "")
                 display_text = f"{client_id} - {last_msg}" if last_msg else client_id
 
+                last_msg = client.get("last_message", "")
+                display_text = f"{client_id} - {last_msg}" if last_msg else client_id
+
                 btn = ctk.CTkButton(self.clients_scroll, text=display_text, width=260,
                                     command=lambda cid=client_id: self.select_client(cid))
+
                 btn.pack(pady=2)
                 self.client_buttons[client_id] = btn
 
