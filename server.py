@@ -46,7 +46,8 @@ async def get_status():
         {
             "client_id": cid,
             "last_seen": info["last_seen"].isoformat(),
-            "connected": info["websocket"] is not None
+            "connected": info["websocket"] is not None,
+            "last_message": info.get("last_message", "")
         }
         for cid, info in connected_clients.items()
     ]
