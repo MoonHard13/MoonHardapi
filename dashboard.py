@@ -65,13 +65,12 @@ class ClientDashboard(ctk.CTk):
         self.install_all_btn = ctk.CTkButton(self.buttons_frame, text="🧩 Install All", command=self.install_all, width=140)
         self.install_all_btn.grid(row=1, column=2, padx=5, pady=5)
 
+        self.backup_btn = ctk.CTkButton(self.buttons_frame, text="💾 Backup", command=self.backup_command, width=140)
+        self.backup_btn.grid(row=1, column=0, padx=5, pady=5)
+
         self.status_box = ctk.CTkTextbox(self.control_panel, height=180)
         self.status_box.pack(fill="both", expand=True, padx=10, pady=(0, 10))
         
-        self.backup_btn = ctk.CTkButton(self.buttons_frame, text="💾 Backup", command=self.backup_command, width=140)
-        self.backup_btn.grid(row=2, column=1, padx=5, pady=5)
-       
-
         self.refresh_status_loop()
 
     def select_client(self, client_id):
