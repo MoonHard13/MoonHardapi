@@ -1,6 +1,7 @@
 import customtkinter as ctk
 import threading
 import json 
+import os
 import time
 from dashboard_controller import DashboardController
 from program_registry import PROGRAMS
@@ -20,6 +21,7 @@ class ClientDashboard(ctk.CTk):
         self.controller = DashboardController(SERVER_URL, AUTH_TOKEN)
         self.last_messages_seen = {}
         self.selected_client = None
+        self.client_names = self.load_client_names()
 
         self.grid_columnconfigure(0, weight=1, uniform="col")
         self.grid_columnconfigure(1, weight=2, uniform="col")
@@ -111,16 +113,23 @@ class ClientDashboard(ctk.CTk):
             for client in response:
                 client_id = client.get("client_id", "Unknown")
                 last_msg = client.get("last_message", "")
-                display_text = f"{client_id} - {last_msg}" if last_msg else client_id
+                friendly_name = self.client_names.get(client_id, client_id)
+                display_text = f"{friendly_name} - {last_msg}" if last_msg else friendly_name
 
-                btn = ctk.CTkButton(self.clients_scroll, text=display_text, width=260,
+                frame = ctk.CTkFrame(self.clients_scroll)
+                frame.pack(fill="x", padx=5, pady=2)
+
+                btn = ctk.CTkButton(frame, text=display_text, width=220,
                                     command=lambda cid=client_id: self.select_client(cid))
-                btn.pack(pady=2)
+                btn.pack(side="left", padx=(0, 5))
                 self.client_buttons[client_id] = btn
 
-                # NEW: if the message is new, log it to the status box
+                rename_btn = ctk.CTkButton(frame, text="✏️", width=40,
+                                        command=lambda cid=client_id: self.rename_client(cid))
+                rename_btn.pack(side="left")
+
                 if last_msg and self.last_messages_seen.get(client_id) != last_msg:
-                    self.status_box.insert("end", f"🖥️ {client_id}: {last_msg}\n")
+                    self.status_box.insert("end", f"🖥️ {friendly_name}: {last_msg}\n")
                     self.last_messages_seen[client_id] = last_msg
 
     def download_selected(self):
@@ -231,6 +240,37 @@ class ClientDashboard(ctk.CTk):
                 time.sleep(10)
 
         threading.Thread(target=monitor, daemon=True).start()
+
+    def load_client_names(self):
+        try:
+            with open("client_names.json", "r", encoding="utf-8") as f:
+                return json.load(f)
+        except:
+            return {}
+
+    def save_client_names(self):
+        with open("client_names.json", "w", encoding="utf-8") as f:
+            json.dump(self.client_names, f, indent=2)
+
+    def rename_client(self, client_id):
+        popup = ctk.CTkToplevel(self)
+        popup.title(f"Rename {client_id}")
+        popup.geometry("300x150")
+
+        ctk.CTkLabel(popup, text="New name:").pack(pady=10)
+        entry = ctk.CTkEntry(popup)
+        entry.insert(0, self.client_names.get(client_id, client_id))
+        entry.pack(pady=5)
+
+        def save():
+            new_name = entry.get().strip()
+            if new_name:
+                self.client_names[client_id] = new_name
+                self.save_client_names()
+                self.refresh_status()
+                popup.destroy()
+
+        ctk.CTkButton(popup, text="Save", command=save).pack(pady=10)
 
 if __name__ == "__main__":
     ctk.set_appearance_mode("dark")
