@@ -4,6 +4,8 @@ import json
 import time
 from dashboard_controller import DashboardController
 from program_registry import PROGRAMS
+import datetime
+from tkinter import messagebox
 
 SERVER_URL = "https://moonhardapi.onrender.com"
 AUTH_TOKEN = "479a263f74007327498f24925a9ce0ae"
@@ -71,6 +73,11 @@ class ClientDashboard(ctk.CTk):
         self.status_box = ctk.CTkTextbox(self.control_panel, height=180)
         self.status_box.pack(fill="both", expand=True, padx=10, pady=(0, 10))
         
+        self.schedule_btn = ctk.CTkButton(self.buttons_frame, text="⏱️ Schedule Task", command=self.open_schedule_window, width=140)
+        self.schedule_btn.grid(row=2, column=0, columnspan=3, pady=5)
+        self.scheduled_tasks = []
+        self.monitor_schedules()
+
         self.refresh_status_loop()
 
     def select_client(self, client_id):
@@ -138,6 +145,75 @@ class ClientDashboard(ctk.CTk):
             self.refresh_status()
             self.after(REFRESH_INTERVAL * 1000, loop)
         self.after(0, loop)
+
+    def open_schedule_window(self):
+        popup = ctk.CTkToplevel(self)
+        popup.title("Schedule Task")
+        popup.geometry("400x300")
+
+        ctk.CTkLabel(popup, text="Command Type:").pack(pady=5)
+        cmd_type = ctk.CTkComboBox(popup, values=["download_selected", "install_selected", "backup_now"])
+        cmd_type.set("download_selected")
+        cmd_type.pack(pady=5)
+
+        ctk.CTkLabel(popup, text="Programs (comma-separated):").pack(pady=5)
+        prog_entry = ctk.CTkEntry(popup)
+        prog_entry.pack(pady=5)
+
+        ctk.CTkLabel(popup, text="Schedule Time (HH:MM):").pack(pady=5)
+        time_entry = ctk.CTkEntry(popup)
+        time_entry.insert(0, "14:30")
+        time_entry.pack(pady=5)
+
+        ctk.CTkLabel(popup, text="Target Client ID (leave blank for all):").pack(pady=5)
+        target_entry = ctk.CTkEntry(popup)
+        target_entry.pack(pady=5)
+
+        def schedule():
+            try:
+                when = datetime.datetime.strptime(time_entry.get(), "%H:%M").replace(
+                    year=datetime.datetime.now().year,
+                    month=datetime.datetime.now().month,
+                    day=datetime.datetime.now().day
+                )
+                now = datetime.datetime.now()
+                if when < now:
+                    when += datetime.timedelta(days=1)
+
+                cmd = cmd_type.get()
+                progs = prog_entry.get().strip()
+                client = target_entry.get().strip()
+                self.scheduled_tasks.append({
+                    "time": when,
+                    "command": f"{cmd}:{progs}" if progs and cmd != "backup_now" else cmd,
+                    "client": client or None
+                })
+                popup.destroy()
+                self.status_box.insert("end", f"📅 Scheduled: {cmd} at {when.strftime('%H:%M')} for {'ALL' if not client else client}\n")
+            except Exception as e:
+                messagebox.showerror("Error", f"Invalid input: {e}")
+
+        ctk.CTkButton(popup, text="✅ Schedule", command=schedule).pack(pady=10)
+
+    def monitor_schedules(self):
+        def monitor():
+            while True:
+                now = datetime.datetime.now()
+                for task in self.scheduled_tasks[:]:
+                    if now >= task["time"]:
+                        target = task["client"]
+                        cmd = task["command"]
+                        if target:
+                            self.controller.send_to_client(target, cmd)
+                            self.status_box.insert("end", f"🚀 Sent to {target}: {cmd}\n")
+                        else:
+                            result = self.controller.broadcast_command(cmd)
+                            self.status_box.insert("end", f"🚀 Broadcast: {cmd} → {result}\n")
+                        self.scheduled_tasks.remove(task)
+                time.sleep(10)
+
+        threading.Thread(target=monitor, daemon=True).start()
+    
 
 if __name__ == "__main__":
     ctk.set_appearance_mode("dark")
