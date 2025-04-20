@@ -18,6 +18,7 @@ class ClientDashboard(ctk.CTk):
         self.geometry("1000x600")
         self.minsize(900, 500)
         self.controller = DashboardController(SERVER_URL, AUTH_TOKEN)
+        self.last_messages_seen = {}
         self.selected_client = None
 
         self.grid_columnconfigure(0, weight=1, uniform="col")
