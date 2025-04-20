@@ -150,7 +150,7 @@ class ClientDashboard(ctk.CTk):
     def open_schedule_window(self):
         popup = ctk.CTkToplevel(self)
         popup.title("Schedule Task")
-        popup.geometry("400x300")
+        popup.geometry("400x450")
 
         ctk.CTkLabel(popup, text="Command Type:").pack(pady=5)
         cmd_type = ctk.CTkComboBox(popup, values=["download_selected", "install_selected", "backup_now"])
@@ -165,6 +165,11 @@ class ClientDashboard(ctk.CTk):
         time_entry = ctk.CTkEntry(popup)
         time_entry.insert(0, "14:30")
         time_entry.pack(pady=5)
+
+        ctk.CTkLabel(popup, text="Repeat:").pack(pady=5)
+        repeat_mode = ctk.CTkComboBox(popup, values=["Once", "Daily", "Weekly"])
+        repeat_mode.set("Once")
+        repeat_mode.pack(pady=5)
 
         ctk.CTkLabel(popup, text="Target Client ID (leave blank for all):").pack(pady=5)
         target_entry = ctk.CTkEntry(popup)
@@ -187,7 +192,8 @@ class ClientDashboard(ctk.CTk):
                 self.scheduled_tasks.append({
                     "time": when,
                     "command": f"{cmd}:{progs}" if progs and cmd != "backup_now" else cmd,
-                    "client": client or None
+                    "client": client or None,
+                    "repeat": repeat_mode.get()
                 })
                 popup.destroy()
                 self.status_box.insert("end", f"📅 Scheduled: {cmd} at {when.strftime('%H:%M')} for {'ALL' if not client else client}\n")
@@ -200,21 +206,31 @@ class ClientDashboard(ctk.CTk):
         def monitor():
             while True:
                 now = datetime.datetime.now()
-                for task in self.scheduled_tasks[:]:
+                for task in self.scheduled_tasks[:]:  # iterate safely
                     if now >= task["time"]:
-                        target = task["client"]
-                        cmd = task["command"]
+                        target = task.get("client")
+                        cmd = task.get("command")
+                        repeat = task.get("repeat", "Once")
+
+                        # === Run the command ===
                         if target:
                             self.controller.send_to_client(target, cmd)
                             self.status_box.insert("end", f"🚀 Sent to {target}: {cmd}\n")
                         else:
                             result = self.controller.broadcast_command(cmd)
                             self.status_box.insert("end", f"🚀 Broadcast: {cmd} → {result}\n")
-                        self.scheduled_tasks.remove(task)
+
+                        # === Handle repeat ===
+                        if repeat == "Daily":
+                            task["time"] += datetime.timedelta(days=1)
+                        elif repeat == "Weekly":
+                            task["time"] += datetime.timedelta(weeks=1)
+                        else:  # Once
+                            self.scheduled_tasks.remove(task)
+
                 time.sleep(10)
 
         threading.Thread(target=monitor, daemon=True).start()
-    
 
 if __name__ == "__main__":
     ctk.set_appearance_mode("dark")
