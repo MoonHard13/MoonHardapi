@@ -32,3 +32,10 @@ class CommandHandler:
             self.send("💾 Backup completed")
         else:
             self.send(f"⚠️ Unknown command: {msg}")
+    def get_system_info(self):
+        import psutil
+        return {
+            "cpu": psutil.cpu_percent(),
+            "ram": psutil.virtual_memory().percent,
+            "disk": psutil.disk_usage('/').percent
+        }

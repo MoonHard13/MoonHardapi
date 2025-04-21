@@ -114,8 +114,10 @@ class ClientDashboard(ctk.CTk):
                 client_id = client.get("client_id", "Unknown")
                 last_msg = client.get("last_message", "")
                 friendly_name = self.client_names.get(client_id, client_id)
-                display_text = f"{friendly_name} - {last_msg}" if last_msg else friendly_name
-
+                cpu = client.get("cpu", "?")
+                ram = client.get("ram", "?")
+                disk = client.get("disk", "?")
+                display_text = f"{friendly_name}\n🧠 CPU: {cpu}%   💾 RAM: {ram}%   💽 Disk: {disk}%"
                 frame = ctk.CTkFrame(self.clients_scroll)
                 frame.pack(fill="x", padx=5, pady=2)
 

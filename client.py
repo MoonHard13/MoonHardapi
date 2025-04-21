@@ -92,9 +92,11 @@ class TrayClient:
                                     from backup_executor import BackupExecutor
                                     BackupExecutor().run_backup()
                                     await self.message_queue.put(f"✅ Backup completed from {CLIENT_ID}")
+                                elif msg == "get_status":
+                                    info = self.command_handler.get_system_info()
+                                    await self.message_queue.put(json.dumps(info))
                                 else:
                                     self.command_handler.handle(msg)
-
                             except Exception as e:
                                 print(f"❌ WebSocket receive error: {e}")
                                 break
