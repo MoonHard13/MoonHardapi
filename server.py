@@ -70,19 +70,20 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str, token: str = 
     try:
         while True:
             try:
-                message = await websocket.receive_text()
-                print(f"📨 {client_id} → {message}")
+                data = json.loads(message)
+                if isinstance(data, dict):
+                    connected_clients[client_id].update({
+                        "cpu": data.get("cpu"),
+                        "ram": data.get("ram"),
+                        "disk": data.get("disk")
+                    })
+                    # Optional: also store a readable message
+                    connected_clients[client_id]["last_message"] = f"🧠 CPU: {data.get('cpu')}%   💾 RAM: {data.get('ram')}%   💽 Disk: {data.get('disk')}%"
+                else:
+                    connected_clients[client_id]["last_message"] = message
+            except json.JSONDecodeError:
                 connected_clients[client_id]["last_message"] = message
-                try:
-                    data = json.loads(message)
-                    if isinstance(data, dict):
-                        connected_clients[client_id].update({
-                            "cpu": data.get("cpu"),
-                            "ram": data.get("ram"),
-                            "disk": data.get("disk")
-                        })
-                except json.JSONDecodeError:
-                    pass
+
             except Exception as e:
                 print(f"⚠️ Error receiving from {client_id}: {e}")
                 break
