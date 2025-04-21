@@ -48,7 +48,10 @@ async def get_status():
             "client_id": cid,
             "last_seen": info["last_seen"].isoformat(),
             "connected": info["websocket"] is not None,
-            "last_message": info.get("last_message", "")
+            "last_message": info.get("last_message", ""),
+            "cpu": info.get("cpu"),
+            "ram": info.get("ram"),
+            "disk": info.get("disk")
         }
         results.append(result)
     return results
