@@ -1,6 +1,26 @@
+import json
+import os
 import logging
 from logging.handlers import TimedRotatingFileHandler
-import os
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request, HTTPException, Query
+from fastapi.responses import JSONResponse
+from typing import Dict
+from datetime import datetime
+
+TASKS_FILE = "scheduled_tasks.json"
+scheduled_tasks = []
+
+def load_tasks():
+    global scheduled_tasks
+    if os.path.exists(TASKS_FILE):
+        with open(TASKS_FILE, "r", encoding="utf-8") as f:
+            scheduled_tasks = json.load(f)
+    else:
+        scheduled_tasks = []
+
+def save_tasks():
+    with open(TASKS_FILE, "w", encoding="utf-8") as f:
+        json.dump(scheduled_tasks, f, indent=2)
 
 # === Δημιουργία φακέλου logs ===
 os.makedirs("logs", exist_ok=True)
@@ -15,16 +35,11 @@ logger = logging.getLogger("moonhard")
 logger.setLevel(logging.INFO)
 logger.addHandler(log_handler)
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request, HTTPException, Query
-from fastapi.responses import JSONResponse
-from typing import Dict
-from datetime import datetime
-import asyncio
-import json
-
 app = FastAPI()
 AUTH_TOKEN = "479a263f74007327498f24925a9ce0ae"
 connected_clients: Dict[str, Dict] = {}
+
+load_tasks()
 
 # === Έλεγχος token ===
 def check_token(token: str):
@@ -96,7 +111,6 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str, token: str = 
         if client_id in connected_clients:
             connected_clients[client_id]["websocket"] = None
 
-
 @app.post("/send/{client_id}")
 async def send_command(client_id: str, command: str, token: str = Query(...)):
     check_token(token)
@@ -131,3 +145,16 @@ async def rename_client(client_id: str, name: str = Query(...), token: str = Que
         return {"message": f"{client_id} renamed to {name}"}
     else:
         return {"error": "Client not found"}
+
+@app.get("/tasks")
+async def get_scheduled_tasks(token: str = Query(...)):
+    check_token(token)
+    return scheduled_tasks
+
+@app.post("/tasks")
+async def set_scheduled_tasks(tasks: list, token: str = Query(...)):
+    check_token(token)
+    global scheduled_tasks
+    scheduled_tasks = tasks
+    save_tasks()
+    return {"message": "✅ Tasks updated"}

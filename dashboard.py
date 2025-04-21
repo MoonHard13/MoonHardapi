@@ -1,7 +1,6 @@
 import customtkinter as ctk
 import threading
 import json 
-import os
 import time
 from dashboard_controller import DashboardController
 from program_registry import PROGRAMS
@@ -79,9 +78,20 @@ class ClientDashboard(ctk.CTk):
         self.schedule_btn = ctk.CTkButton(self.buttons_frame, text="⏱️ Schedule Task", command=self.open_schedule_window, width=140)
         self.schedule_btn.grid(row=2, column=0, columnspan=3, pady=5)
         self.scheduled_tasks = []
+        self.load_schedules()
         self.monitor_schedules()
-
         self.refresh_status_loop()
+
+    def save_schedules(self):
+        with open("scheduled_tasks.json", "w", encoding="utf-8") as f:
+            json.dump(self.scheduled_tasks, f, indent=2)
+
+    def load_schedules(self):
+        try:
+            with open("scheduled_tasks.json", "r", encoding="utf-8") as f:
+                self.scheduled_tasks = json.load(f)
+        except:
+            self.scheduled_tasks = []
 
     def select_client(self, client_id):
         self.selected_client = client_id
@@ -161,30 +171,45 @@ class ClientDashboard(ctk.CTk):
     def open_schedule_window(self):
         popup = ctk.CTkToplevel(self)
         popup.title("Schedule Task")
-        popup.geometry("400x450")
+        popup.geometry("400x600")
 
+        # Command type
         ctk.CTkLabel(popup, text="Command Type:").pack(pady=5)
         cmd_type = ctk.CTkComboBox(popup, values=["download_selected", "install_selected", "backup_now"])
         cmd_type.set("download_selected")
         cmd_type.pack(pady=5)
 
-        ctk.CTkLabel(popup, text="Programs (comma-separated):").pack(pady=5)
-        prog_entry = ctk.CTkEntry(popup)
-        prog_entry.pack(pady=5)
+        # Program checkboxes
+        ctk.CTkLabel(popup, text="Select Programs:").pack(pady=(10, 2))
+        prog_frame = ctk.CTkScrollableFrame(popup, height=150)
+        prog_frame.pack(pady=2)
+        prog_vars = {}
+        for prog in PROGRAMS:
+            var = ctk.BooleanVar()
+            chk = ctk.CTkCheckBox(prog_frame, text=prog, variable=var)
+            chk.pack(anchor="w")
+            prog_vars[prog] = var
 
+        # Client checkboxes
+        ctk.CTkLabel(popup, text="Select Target Clients:").pack(pady=(10, 2))
+        client_frame = ctk.CTkScrollableFrame(popup, height=150)
+        client_frame.pack(pady=2)
+        client_vars = {}
+        for cid in self.client_names:
+            var = ctk.BooleanVar()
+            chk = ctk.CTkCheckBox(client_frame, text=self.client_names[cid], variable=var)
+            chk.pack(anchor="w")
+            client_vars[cid] = var
+
+        # Time & Repeat
         ctk.CTkLabel(popup, text="Schedule Time (HH:MM):").pack(pady=5)
         time_entry = ctk.CTkEntry(popup)
         time_entry.insert(0, "14:30")
         time_entry.pack(pady=5)
 
-        ctk.CTkLabel(popup, text="Repeat:").pack(pady=5)
         repeat_mode = ctk.CTkComboBox(popup, values=["Once", "Daily", "Weekly"])
         repeat_mode.set("Once")
         repeat_mode.pack(pady=5)
-
-        ctk.CTkLabel(popup, text="Target Client ID (leave blank for all):").pack(pady=5)
-        target_entry = ctk.CTkEntry(popup)
-        target_entry.pack(pady=5)
 
         def schedule():
             try:
@@ -197,19 +222,26 @@ class ClientDashboard(ctk.CTk):
                 if when < now:
                     when += datetime.timedelta(days=1)
 
+                # Build command string
+                selected_progs = [k for k, v in prog_vars.items() if v.get()]
                 cmd = cmd_type.get()
-                progs = prog_entry.get().strip()
-                client = target_entry.get().strip()
-                self.scheduled_tasks.append({
-                    "time": when,
-                    "command": f"{cmd}:{progs}" if progs and cmd != "backup_now" else cmd,
-                    "client": client or None,
+                cmd_str = cmd if cmd == "backup_now" else f"{cmd}:{','.join(selected_progs)}"
+
+                selected_clients = [cid for cid, v in client_vars.items() if v.get()]
+
+                # Save task
+                task = {
+                    "time": when.strftime("%Y-%m-%d %H:%M"),
+                    "command": cmd_str,
+                    "clients": selected_clients,
                     "repeat": repeat_mode.get()
-                })
+                }
+                self.scheduled_tasks.append(task)
+                self.save_schedules()
+                self.status_box.insert("end", f"📅 Scheduled {cmd_str} for {len(selected_clients)} clients at {when.strftime('%H:%M')}\n")
                 popup.destroy()
-                self.status_box.insert("end", f"📅 Scheduled: {cmd} at {when.strftime('%H:%M')} for {'ALL' if not client else client}\n")
             except Exception as e:
-                messagebox.showerror("Error", f"Invalid input: {e}")
+                messagebox.showerror("Error", str(e))
 
         ctk.CTkButton(popup, text="✅ Schedule", command=schedule).pack(pady=10)
 
@@ -217,30 +249,28 @@ class ClientDashboard(ctk.CTk):
         def monitor():
             while True:
                 now = datetime.datetime.now()
-                for task in self.scheduled_tasks[:]:  # iterate safely
-                    if now >= task["time"]:
-                        target = task.get("client")
-                        cmd = task.get("command")
-                        repeat = task.get("repeat", "Once")
+                for task in self.scheduled_tasks[:]:
+                    task_time = datetime.datetime.strptime(task["time"], "%Y-%m-%d %H:%M")
+                    if now >= task_time:
+                        cmd = task["command"]
+                        repeat = task["repeat"]
+                        clients = task["clients"]
 
-                        # === Run the command ===
-                        if target:
-                            self.controller.send_to_client(target, cmd)
-                            self.status_box.insert("end", f"🚀 Sent to {target}: {cmd}\n")
+                        if clients:
+                            for cid in clients:
+                                self.controller.send_to_client(cid, cmd)
+                                self.status_box.insert("end", f"🚀 Sent to {cid}: {cmd}\n")
                         else:
                             result = self.controller.broadcast_command(cmd)
-                            self.status_box.insert("end", f"🚀 Broadcast: {cmd} → {result}\n")
-
-                        # === Handle repeat ===
+                            self.status_box.insert("end", f"📡 Broadcast: {cmd} → {result}\n")
                         if repeat == "Daily":
-                            task["time"] += datetime.timedelta(days=1)
+                            task["time"] = (task_time + datetime.timedelta(days=1)).strftime("%Y-%m-%d %H:%M")
                         elif repeat == "Weekly":
-                            task["time"] += datetime.timedelta(weeks=1)
-                        else:  # Once
+                            task["time"] = (task_time + datetime.timedelta(weeks=1)).strftime("%Y-%m-%d %H:%M")
+                        else:
                             self.scheduled_tasks.remove(task)
-
+                        self.save_schedules()
                 time.sleep(10)
-
         threading.Thread(target=monitor, daemon=True).start()
 
     def load_client_names(self):

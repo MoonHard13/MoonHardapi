@@ -1,5 +1,12 @@
 fastapi
-uvicorn[standard]
+uvicorn
+requests
+pyodbc
 psutil
 websockets
-requests
+customtkinter
+pystray
+pillow
+pydrive2
+oauth2client
+watchdog
