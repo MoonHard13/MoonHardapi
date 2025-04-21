@@ -70,6 +70,7 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str, token: str = 
     try:
         while True:
             try:
+                message = await websocket.receive_text()
                 data = json.loads(message)
                 if isinstance(data, dict):
                     connected_clients[client_id].update({
