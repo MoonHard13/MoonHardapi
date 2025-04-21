@@ -268,6 +268,7 @@ class ClientDashboard(ctk.CTk):
             new_name = entry.get().strip()
             if new_name:
                 self.client_names[client_id] = new_name
+                self.controller.rename_client(client_id, new_name)
                 self.save_client_names()
                 self.refresh_status()
                 popup.destroy()

@@ -20,3 +20,19 @@ class DashboardController:
             return response.json()
         except Exception as e:
             return {"error": str(e)}
+
+    def send_to_client(self, client_id, command):
+        try:
+            url = f"{self.server_url}/send/{client_id}?token={self.auth_token}&command={command}"
+            response = requests.get(url)
+            return response.json()
+        except Exception as e:
+            return {"error": str(e)}
+
+    def rename_client(self, client_id, new_name):
+        try:
+            url = f"{self.server_url}/rename/{client_id}?token={self.auth_token}&name={new_name}"
+            response = requests.post(url)
+            return response.json()
+        except Exception as e:
+            return {"error": str(e)}

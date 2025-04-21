@@ -46,8 +46,9 @@ async def get_status():
     for cid, info in connected_clients.items():
         result = {
             "client_id": cid,
+            "friendly_name": info.get("friendly_name", cid),  # ✅ new
             "last_seen": info["last_seen"].isoformat(),
-            "connected": info["websocket"] is not None,
+            "connected": info.get("websocket") is not None,
             "last_message": info.get("last_message", ""),
             "cpu": info.get("cpu"),
             "ram": info.get("ram"),
@@ -95,6 +96,7 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str, token: str = 
         if client_id in connected_clients:
             connected_clients[client_id]["websocket"] = None
 
+
 @app.post("/send/{client_id}")
 async def send_command(client_id: str, command: str, token: str = Query(...)):
     check_token(token)
@@ -120,3 +122,12 @@ async def broadcast_command(command: str, token: str = Query(...)):
             except:
                 continue
     return {"message": f"📡 Sent '{command}' to {sent} clients"}
+
+@app.post("/rename/{client_id}")
+async def rename_client(client_id: str, name: str = Query(...), token: str = Query(...)):
+    check_token(token)
+    if client_id in connected_clients:
+        connected_clients[client_id]["friendly_name"] = name
+        return {"message": f"{client_id} renamed to {name}"}
+    else:
+        return {"error": "Client not found"}
