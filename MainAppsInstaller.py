@@ -2,6 +2,9 @@ import os
 import subprocess
 import socket
 from time import sleep
+import json, zipfile
+from datetime import datetime
+
 
 # Your predefined ISS templates
 ISS_FILES = {
@@ -222,6 +225,38 @@ class MainAppsInstaller:
         else:
             self.log("ℹ️ Τα αρχεία .iss υπάρχουν ήδη.")
 
+        # === Βήμα X: SQL Backup ===
+        try:
+            self.log("💾 Δημιουργία backup SQL βάσης από appsettings.production.json...")
+            json_path = r"C:\\Program Files (x86)\\Sunsoft Ltd\\ExternalTaxProvider\\External.Tax.Provider\\appsettings.production.json"
+            with open(json_path, "r", encoding="utf-8") as f:
+                config_data = json.load(f)
+            conn_str = config_data["BOConnections"][0]["DatabaseConnection"]
+            parts = dict(p.strip().split("=", 1) for p in conn_str.split(";") if "=" in p)
+            server = parts.get("Server") or parts.get("Data Source")
+            db = parts.get("Database") or parts.get("Initial Catalog")
+            user = parts.get("User ID")
+            pwd = parts.get("Password")
+
+            date = datetime.now().strftime("%d%m%Y")
+            backup_dir = r"C:\\SunsoftSetups\\BackupDB"
+            os.makedirs(backup_dir, exist_ok=True)
+            bak_file = os.path.join(backup_dir, f"{db}_{date}.bak")
+            zip_file = os.path.join(backup_dir, f"{db}_{date}.zip")
+
+            # Εκτέλεση εντολής backup
+            backup_cmd = f'sqlcmd -S "{server}" -U "{user}" -P "{pwd}" -Q "BACKUP DATABASE [{db}] TO DISK=\'{bak_file}\' WITH INIT"'
+            result = subprocess.run(backup_cmd, shell=True, capture_output=True, text=True)
+
+            if result.returncode == 0 and os.path.exists(bak_file):
+                with zipfile.ZipFile(zip_file, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                    zipf.write(bak_file, arcname=os.path.basename(bak_file))
+                self.log(f"✅ Backup ολοκληρώθηκε και συμπιέστηκε: {zip_file}")
+            else:
+                self.log(f"❌ Απέτυχε το SQL Backup: {result.stderr.strip()}")
+        except Exception as e:
+            self.log(f"[Σφάλμα] Δημιουργίας backup: {e}")
+
         # === Βήμα 3: Εκτέλεση FullUpdateServer.cmd ===
         try:
             self.log("🚀 Εκτελείται FullUpdateServer.cmd...")
@@ -229,3 +264,61 @@ class MainAppsInstaller:
             self.log("✅ Ολοκληρώθηκε το Full Update.")
         except Exception as e:
             self.log(f"[Σφάλμα] Εκτέλεσης FullUpdateServer.cmd: {e}")
+
+        # === Βήμα 4: Εκτέλεση UpgradeDb για όλες τις εφαρμογές ===
+        self.run_upgrade_db()
+
+    def run_upgrade_db(self):
+        exe_path = r"C:\\Program Files (x86)\\Common Files\\Sunsoft\\UpgradeDb.exe"
+
+        def get_app_options():
+            try:
+                proc = subprocess.Popen([exe_path, "-i"], stdin=subprocess.PIPE,
+                                        stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                output, _ = proc.communicate(input="\\n")
+                app_lines = re.findall(r"(\\d+)\\.\\s+(.+)", output)
+                app_dict = {num: name.strip() for num, name in app_lines if num != '0'}
+                ordered = []
+
+                for name in ["BackOffice", "Amvrosia"]:
+                    for k, v in app_dict.items():
+                        if name.lower() in v.lower():
+                            ordered.append((k, v))
+
+                for k, v in app_dict.items():
+                    if (k, v) not in ordered:
+                        ordered.append((k, v))
+
+                return ordered
+            except Exception as e:
+                self.log(f"❌ Σφάλμα εφαρμογών UpgradeDb: {e}")
+                return []
+
+        def get_databases(app_number):
+            try:
+                proc = subprocess.Popen([exe_path, "-i"], stdin=subprocess.PIPE,
+                                        stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                output, _ = proc.communicate(input=f"{app_number}\\n")
+                db_lines = re.findall(r"(\\d+)\\.\\s+(.+)", output)
+                return [num for num, name in db_lines if num not in ['0', '1']]
+            except Exception as e:
+                self.log(f"❌ Σφάλμα βάσεων UpgradeDb για εφαρμογή {app_number}: {e}")
+                return []
+
+        def run_upgrade(app_num, db_num):
+            try:
+                proc = subprocess.Popen([exe_path, "-i"], stdin=subprocess.PIPE,
+                                        stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                output, error = proc.communicate(input=f"{app_num}\\n{db_num}\\n")
+                self.log(f"✅ UpgradeDb: Εφαρμογή {app_num}, Βάση {db_num}")
+                if error:
+                    self.log(f"⚠️ Προειδοποίηση: {error}")
+            except Exception as e:
+                self.log(f"❌ Απέτυχε UpgradeDb: App {app_num} DB {db_num} → {e}")
+
+        self.log("🔄 Ξεκινά το UpgradeDb.exe για όλες τις εφαρμογές...")
+        for app_num, app_name in get_app_options():
+            db_list = get_databases(app_num)
+            for db_num in db_list:
+                run_upgrade(app_num, db_num)
+        self.log("✅ Ολοκληρώθηκε η διαδικασία UpgradeDb.")
