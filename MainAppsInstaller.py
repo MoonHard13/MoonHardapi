@@ -1,6 +1,7 @@
 import os
 import subprocess
 import socket
+import re
 from time import sleep
 import json, zipfile
 from datetime import datetime
