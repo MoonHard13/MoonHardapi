@@ -194,6 +194,8 @@ class MainAppsInstaller:
                 self.log(f"✅ Έκλεισε: {proc}")
             except Exception as e:
                 self.log(f"[Σφάλμα] Κλείνοντας {proc}: {e}")
+            # === Βήμα 4: Εκτέλεση UpgradeDb ===
+            self.run_upgrade_db()
 
         # === Βήμα 1: Εκτέλεση SunsoftUpdater αν δεν υπάρχει FullUpdateServer.cmd ===
         if not os.path.exists(self.full_update_cmd):
@@ -276,79 +278,39 @@ class MainAppsInstaller:
         except Exception as e:
             self.log(f"[Σφάλμα] Εκτέλεσης FullUpdateServer.cmd: {e}")
 
-        # === Βήμα 4: Εκτέλεση UpgradeDb για όλες τις εφαρμογές ===
-        self.run_upgrade_db()
-
     def run_upgrade_db(self):
         exe_path = r"C:\\Program Files (x86)\\Common Files\\Sunsoft\\UpgradeDb.exe"
 
-        def get_app_options():
-            try:
-                proc = subprocess.Popen(
-                    [exe_path, "-i"],
-                    stdin=subprocess.PIPE,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    text=True,
-                    cwd=r"C:\Program Files (x86)\Common Files\Sunsoft"
-                )
-                output, _ = proc.communicate(input="\n")
-                app_lines = re.findall(r"(\d+)\.\s+(.+)", output)
-                app_dict = {num: name.strip() for num, name in app_lines if num != '0'}
-                ordered = []
+        try:
+            self.log("🔄 Ξεκινά το UpgradeDb.exe για όλες τις εφαρμογές...")
 
-                for name in ["BackOffice", "Amvrosia"]:
-                    for k, v in app_dict.items():
-                        if name.lower() in v.lower():
-                            ordered.append((k, v))
+            # === Προκαθορισμένα inputs για αυτόματη εκτέλεση ===
+            inputs = "2\n2\n0\n0\n"  # Επιλογή 2 για BackOffice, 2 για βάση, 0 Exit βάση, 0 Exit πρόγραμμα
 
-                for k, v in app_dict.items():
-                    if (k, v) not in ordered:
-                        ordered.append((k, v))
+            proc = subprocess.Popen(
+                [exe_path, "-i"],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                cwd=r"C:\Program Files (x86)\Common Files\Sunsoft"
+            )
 
-                return ordered
-            except Exception as e:
-                self.log(f"❌ Σφάλμα εφαρμογών UpgradeDb: {e}")
-                return []
+            output, error = proc.communicate(input=inputs)
 
-        def get_databases(app_number):
-            try:
-                proc = subprocess.Popen(
-                    [exe_path, "-i"],
-                    stdin=subprocess.PIPE,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    text=True,
-                    cwd=r"C:\Program Files (x86)\Common Files\Sunsoft"
-                )
-                output, _ = proc.communicate(input=f"{app_number}\n")
-                db_lines = re.findall(r"(\d+)\.\s+(.+)", output)
-                return [num for num, name in db_lines if num not in ['0', '1']]
-            except Exception as e:
-                self.log(f"❌ Σφάλμα βάσεων UpgradeDb για εφαρμογή {app_number}: {e}")
-                return []
+            self.log("[UpgradeDb] Έξοδος προγράμματος:")
+            for line in output.splitlines():
+                self.log(f"[UpgradeDb] {line.strip()}")
 
-        def run_upgrade(app_num, db_num):
-            try:
-                proc = subprocess.Popen(
-                    [exe_path, "-i"],
-                    stdin=subprocess.PIPE,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    text=True,
-                    cwd=r"C:\Program Files (x86)\Common Files\Sunsoft"
-                )
-                output, error = proc.communicate(input=f"{app_num}\n{db_num}\n")
-                self.log(f"✅ UpgradeDb: Εφαρμογή {app_num}, Βάση {db_num}")
-                if error:
-                    self.log(f"⚠️ Προειδοποίηση: {error}")
-            except Exception as e:
-                self.log(f"❌ Απέτυχε UpgradeDb: App {app_num} DB {db_num} → {e}")
+            if proc.returncode == 0:
+                self.log("✅ Ολοκληρώθηκε η διαδικασία UpgradeDb χωρίς σφάλματα.")
+            else:
+                self.log(f"❌ Σφάλμα κατά την εκτέλεση UpgradeDb. Κωδικός εξόδου: {proc.returncode}")
 
-        self.log("🔄 Ξεκινά το UpgradeDb.exe για όλες τις εφαρμογές...")
-        for app_num, app_name in get_app_options():
-            db_list = get_databases(app_num)
-            for db_num in db_list:
-                run_upgrade(app_num, db_num)
-        self.log("✅ Ολοκληρώθηκε η διαδικασία UpgradeDb.")
+        except Exception as e:
+            self.log(f"❌ Εξαίρεση στην εκτέλεση UpgradeDb: {e}")
+
+
+        
+        
 

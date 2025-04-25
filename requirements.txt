@@ -10,3 +10,4 @@ pillow
 pydrive2
 oauth2client
 watchdog
+python-multipart
