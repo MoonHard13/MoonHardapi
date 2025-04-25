@@ -282,34 +282,40 @@ class MainAppsInstaller:
     def run_upgrade_db(self):
         exe_path = r"C:\\Program Files (x86)\\Common Files\\Sunsoft\\UpgradeDb.exe"
 
+        applications = {
+            "BackOffice": "2",  # Επιλογή 2 για BackOffice
+            "Amvrosia": "1"     # Επιλογή 1 για Amvrosia
+        }
+
         try:
-            self.log("🔄 Ξεκινά το UpgradeDb.exe για όλες τις εφαρμογές...")
+            for app_name, app_number in applications.items():
+                self.log(f"🔄 Ξεκινά UpgradeDb για εφαρμογή: {app_name}...")
 
-            # === Προκαθορισμένα inputs για αυτόματη εκτέλεση ===
-            inputs = "2\n2\n0\n0\n"  # Επιλογή 2 για BackOffice, 2 για βάση, 0 Exit βάση, 0 Exit πρόγραμμα
+                inputs = f"{app_number}\n2\n0\n0\n"  # Επιλογή εφαρμογής ➔ Επιλογή βάσης ➔ Exit ➔ Exit
 
-            proc = subprocess.Popen(
-                [exe_path, "-i"],
-                stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                cwd=r"C:\Program Files (x86)\Common Files\Sunsoft"
-            )
+                proc = subprocess.Popen(
+                    [exe_path, "-i"],
+                    stdin=subprocess.PIPE,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    cwd=r"C:\Program Files (x86)\Common Files\Sunsoft"
+                )
 
-            output, error = proc.communicate(input=inputs)
+                output, error = proc.communicate(input=inputs)
 
-            self.log("[UpgradeDb] Έξοδος προγράμματος:")
-            for line in output.splitlines():
-                self.log(f"[UpgradeDb] {line.strip()}")
+                self.log(f"[UpgradeDb] Έξοδος για {app_name}:")
+                for line in output.splitlines():
+                    self.log(f"[UpgradeDb] {line.strip()}")
 
-            if proc.returncode == 0:
-                self.log("✅ Ολοκληρώθηκε η διαδικασία UpgradeDb χωρίς σφάλματα.")
-            else:
-                self.log(f"❌ Σφάλμα κατά την εκτέλεση UpgradeDb. Κωδικός εξόδου: {proc.returncode}")
+                if proc.returncode == 0:
+                    self.log(f"✅ Ολοκληρώθηκε το UpgradeDb για {app_name} χωρίς σφάλματα.")
+                else:
+                    self.log(f"❌ Σφάλμα στο UpgradeDb για {app_name}. Κωδικός εξόδου: {proc.returncode}")
 
         except Exception as e:
             self.log(f"❌ Εξαίρεση στην εκτέλεση UpgradeDb: {e}")
+
 
 
         
