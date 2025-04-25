@@ -194,8 +194,6 @@ class MainAppsInstaller:
                 self.log(f"✅ Έκλεισε: {proc}")
             except Exception as e:
                 self.log(f"[Σφάλμα] Κλείνοντας {proc}: {e}")
-            # === Βήμα 4: Εκτέλεση UpgradeDb ===
-            self.run_upgrade_db()
 
         # === Βήμα 1: Εκτέλεση SunsoftUpdater αν δεν υπάρχει FullUpdateServer.cmd ===
         if not os.path.exists(self.full_update_cmd):
@@ -277,6 +275,9 @@ class MainAppsInstaller:
             self.log("✅ Ολοκληρώθηκε το Full Update.")
         except Exception as e:
             self.log(f"[Σφάλμα] Εκτέλεσης FullUpdateServer.cmd: {e}")
+
+        # === Βήμα 4: Εκτέλεση UpgradeDb.exe ===
+        self.run_upgrade_db()
 
     def run_upgrade_db(self):
         exe_path = r"C:\\Program Files (x86)\\Common Files\\Sunsoft\\UpgradeDb.exe"
